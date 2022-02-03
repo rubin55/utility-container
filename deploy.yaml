@@ -1,4 +1,12 @@
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: proxy-config
+data:
+  proxy-string: "http://proxy.example.com:8080"
+  no-proxy-string: "127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,localhost,.localdomain,.example.com"
+---
+apiVersion: v1
 kind: Service
 metadata:
   name: utility
@@ -28,10 +36,54 @@ spec:
       labels:
         app: utility
     spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
       containers:
       - name: utility
         image: some.docker.registry/utility:latest
         imagePullPolicy: Always
+        env:
+          - name: FTP_PROXY
+            valueFrom:
+              configMapKeyRef:
+                name: proxy-config
+                key: proxy-string
+          - name: HTTP_PROXY
+            valueFrom:
+              configMapKeyRef:
+                name: proxy-config
+                key: proxy-string
+          - name: HTTPS_PROXY
+            valueFrom:
+              configMapKeyRef:
+                name: proxy-config
+                key: proxy-string
+          - name: NO_PROXY
+            valueFrom:
+              configMapKeyRef:
+                name: proxy-config
+                key: no-proxy-string
+          - name: ftp_proxy
+            valueFrom:
+              configMapKeyRef:
+                name: proxy-config
+                key: proxy-string
+          - name: http_proxy
+            valueFrom:
+              configMapKeyRef:
+                name: proxy-config
+                key: proxy-string
+          - name: https_proxy
+            valueFrom:
+              configMapKeyRef:
+                name: proxy-config
+                key: proxy-string
+          - name: no_proxy
+            valueFrom:
+              configMapKeyRef:
+                name: proxy-config
+                key: no-proxy-string
         ports:
         - containerPort: 8000
         resources:
@@ -41,5 +93,3 @@ spec:
           limits:
             cpu: "768m"
             memory: "768M"
-      securityContext:
-        runAsUser: 1000
